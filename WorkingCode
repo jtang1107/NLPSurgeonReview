@@ -3,12 +3,44 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 sid = SentimentIntensityAnalyzer()
 
 import pandas as pd
-data= pd.read_csv('reviews.csv',dtype={'ID': str})
-df = pd.DataFrame(data, columns= ['a cervino'])
-print(df)
+data= pd.read_csv('reviews.csv',dtype={'ID': str}) 
+data = data.drop(['Unnamed: 0'],axis=1) #dropping first column without a review; used for formatting in data
 
-for columnData in df.iteritems():
+#runs through entire dataset and each individual review to run the SA on each one. Then appends to a list of scores
+#with each doctor's name as a key. 
+#dicts is a dictionary of format: {doctor_name1:[sentimentscore1,sentimentscore2,...], doctor_name2:...}
+dicts={}
+lists = []
+for columnData in data.iteritems():
     for item in columnData[1]:
         if (isinstance(item, str)):
-            print(sid.polarity_scores(item))
-            
+            store=sid.polarity_scores(item)
+            lists.append(store["compound"])
+    dicts[columnData[0]]=lists.copy()
+    lists.clear()
+    
+#makes a dictionary with every single review and associated sentiment score, this is made just to check the program
+#and to see if the sentiment scores allign with their reviews
+reviewScoreList = {}
+for columnData in data.iteritems():
+    for item in columnData[1]:
+        if (isinstance(item, str)):
+            store=sid.polarity_scores(item)
+            reviewScoreList[item]=store['compound']
+
+#gives a way to check the reviews and their associated scores
+
+#max_value = max(reviewScoreList.values())
+#max_keys = [k for k, v in reviewScoreList.items() if v == max_value]
+#print(max_value, max_keys)
+
+{rev: score for rev, score in sorted(reviewScoreList.items(), key=lambda item: item[1], reverse=True)} 
+    #Dict of best reviews
+{rev: score for rev, score in sorted(reviewScoreList.items(), key=lambda item: item[1], reverse=False)} 
+    #Dict of worst reviews
+
+neutralRevs={}
+for rev, score in reviewScoreList.items():
+    if score == 0:
+        neutralRevs[rev]=score
+print(neutralRevs)
